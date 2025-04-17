@@ -6,6 +6,7 @@ from api.models import db, User
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 api = Blueprint('api', __name__)
@@ -18,7 +19,7 @@ def handle_login():
     email = request.json.get("email")
     password = request.json.get("password")
     user = User.query.filter_by(email=email).first()
-
+    check_password_hash(user.password, password) 
     token = create_access_token(identity=email)
     return jsonify(token_value=token), 200
 
@@ -30,10 +31,10 @@ def handle_signup():
     user = User.query.filter_by(email=email).first()
     new_user = User(
         email = email,
-        password = password
+        password = generate_password_hash(password)
     )
     db.session.add(new_user)
     db.session.commit()  
-    token = create_access_token(identity=email)
-    return jsonify(), 200
+    
+    return jsonify("user created"), 200
 
