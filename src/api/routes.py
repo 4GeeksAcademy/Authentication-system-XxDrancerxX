@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 
 api = Blueprint('api', __name__)
-
+#usertest@test55.com 123456// use this to test the login and other functionality.
 # Allow CORS requests to this API
 CORS(api)
 
@@ -18,8 +18,15 @@ CORS(api)
 def handle_login():
     email = request.json.get("email")
     password = request.json.get("password")
+    if not email or not password:
+     return jsonify({"msg": "Email and password are required"}), 400
     user = User.query.filter_by(email=email).first()
-    check_password_hash(user.password, password) 
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    if not check_password_hash(user.password, password):  #<<<<=====retunrs true or false(password entered by the client)
+        return jsonify({"msg": "Password doesn't match"}), 401          
+       
     token = create_access_token(identity=email)
     return jsonify(token_value=token), 200
 
@@ -28,7 +35,12 @@ def handle_login():
 def handle_signup():
     email = request.json.get("email")
     password = request.json.get("password")
+    if not email or not password:
+        return jsonify("email and password are required"), 400
+
     user = User.query.filter_by(email=email).first()
+    if user:
+        return jsonify("user already exists"), 409
     new_user = User(
         email = email,
         password = generate_password_hash(password)
@@ -36,5 +48,5 @@ def handle_signup():
     db.session.add(new_user)
     db.session.commit()  
     
-    return jsonify("user created"), 200
+    return jsonify("user created"), 201
 
